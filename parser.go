@@ -17,30 +17,30 @@ func ParseA(input string) (bool, string) {
 	return false, input
 }
 
-func ParseChar(char byte, input string) (byte, string, error) {
+func ParseChar(char string, input string) (string, string, error) {
 	if input == "" {
-		return 0, "", errors.New("no more input")
+		return "", "", errors.New("no more input")
 	}
 
-	if input[0] == char {
+	if string(input[0]) == char {
 		return char, input[1:], nil
 	}
 
-	return 0, "", fmt.Errorf("Expected '%c'. Got '%c'", char, input[0])
+	return "", "", fmt.Errorf("Expected '%s'. Got '%c'", char, input[0])
 }
 
-type ParseFn func(string) (byte, string, error)
+type ParseFn func(string) (string, string, error)
 
-func CharParser(char byte) ParseFn {
-	return func(input string) (byte, string, error) {
+func CharParser(char string) ParseFn {
+	return func(input string) (string, string, error) {
 		if input == "" {
-			return 0, "", errors.New("no more input")
+			return "", "", errors.New("no more input")
 		}
 
-		if input[0] == char {
+		if string(input[0]) == char {
 			return char, input[1:], nil
 		}
 
-		return 0, "", fmt.Errorf("Expected '%c'. Got '%c'", char, input[0])
+		return "", "", fmt.Errorf("Expected '%s'. Got '%c'", char, input[0])
 	}
 }
