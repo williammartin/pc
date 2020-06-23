@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
 	"github.com/williammartin/pc"
@@ -41,25 +42,25 @@ var _ = Describe("PC", func() {
 		It("errors if first parse doesn't match", func() {
 			parseA := pc.CharParser("a")
 			parseB := pc.CharParser("b")
-			parseAB := pc.AndThen(parseA, parseB)
+			parseAB := pc.AndThen(parseA, parseB, "ab")
 
 			_, _, err := parseAB("xyz")
-			Expect(err).To(MatchError("Expected 'a'. Got 'x'"))
+			Expect(err).To(MatchError("first group of 'ab' failed: Expected 'a'. Got 'x'"))
 		})
 
 		It("errors if second parse doesn't match", func() {
 			parseA := pc.CharParser("a")
 			parseB := pc.CharParser("b")
-			parseAB := pc.AndThen(parseA, parseB)
+			parseAB := pc.AndThen(parseA, parseB, "ab")
 
 			_, _, err := parseAB("ayz")
-			Expect(err).To(MatchError("Expected 'b'. Got 'y'"))
+			Expect(err).To(MatchError("second group of 'ab' failed: Expected 'b'. Got 'y'"))
 		})
 
 		It("returns both chars and remaining if both match", func() {
 			parseA := pc.CharParser("a")
 			parseB := pc.CharParser("b")
-			parseAB := pc.AndThen(parseA, parseB)
+			parseAB := pc.AndThen(parseA, parseB, "ab")
 
 			chars, remaining, err := parseAB("abc")
 			Expect(err).NotTo(HaveOccurred())
@@ -157,50 +158,49 @@ var _ = Describe("PC", func() {
 
 	Describe("a json structure", func() {
 
-		It("matches a single digit number", func() {
-			parseOneToNine := pc.CharParser("123456789")
+		Describe("parsing numbers", func() {
+			var parseNumber pc.ParseFn
 
-			char, remaining, err := parseOneToNine("5")
+			BeforeEach(func() {
+				parseOneToNine := pc.CharParser("123456789")
+				parseZero := pc.CharParser("0")
+				parseDecimalPlace := pc.CharParser(".")
+				parseDigit := pc.OrElse(parseZero, parseOneToNine)
+				parseDigits := pc.OneOrMore(parseDigit, "digits")
+				parseDigits0 := pc.OrElse(parseDigits, pc.ZeroOrOne(parseDigit))
+				parseFraction := pc.AndThen(
+					pc.AndThen(parseZero, parseDecimalPlace, "zero and decimal"),
+					parseDigits,
+					"fraction",
+				)
+				parseNumber = pc.OrElse(
+					parseFraction,
+					pc.AndThen(
+						pc.AndThen(parseOneToNine, parseDigits0, "1-9 followed by digits"),
+						pc.ZeroOrOne(pc.AndThen(parseDecimalPlace, parseDigits, "decimal followed by digit")),
+						"number greater than one",
+					),
+				)
+			})
 
-			Expect(err).NotTo(HaveOccurred())
-			Expect(char).To(Equal("5"))
-			Expect(remaining).To(Equal(""))
-		})
+			It("matches a single digit number", func() {
+				char, remaining, err := parseNumber("1")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(char).To(Equal("1"))
+				Expect(remaining).To(Equal(""))
+			})
 
-		It("matches a many digit number", func() {
-			parseOneToNine := pc.CharParser("123456789")
-
-			char, remaining, err := pc.OneOrMore(parseOneToNine, "1-9 digit")("567")
-
-			Expect(err).NotTo(HaveOccurred())
-			Expect(char).To(Equal("567"))
-			Expect(remaining).To(Equal(""))
-		})
-
-		// It("matches a positive number parser", func() {
-		// 	parseOneToNine := pc.CharParser("123456789")
-		// 	parseZero := pc.CharParser("0")
-		// 	parseDecimalPlace := pc.CharParser(".")
-		//   parseDigit := pc.OrElse(parseZero, parseOneToNine)
-		// 	parseFraction := pc.AndThen(
-		// 		pc.AndThen(parseZero, parseDecimalPlace),
-		// 		pc.OneOrMore(parseDigit),
-		// 	)
-		// 	parseNumber := pc.OrElse(
-		// 		parseFraction,
-		// 		pc.AndThen(parseOneToNine, pc.OneOrMore(parseDigit))
-		//
-		// 	char, remaining, err := pc.OneOrMore(parseOneToNine, "1-9 digit")("567")
-		//
-		// 	Expect(err).NotTo(HaveOccurred())
-		// 	Expect(char).To(Equal("567"))
-		// 	Expect(remaining).To(Equal(""))
-		// })
-
-		It("matches {}", func() {
-			// parseOpeningBrace := pc.CharParser("{")
-			// parseClosingBrace := pc.CharParser("}")
-
+			DescribeTable("numbers", func(input, eChar, eRemaining string) {
+				char, remaining, err := parseNumber(input)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(char).To(Equal(eChar))
+				Expect(remaining).To(Equal(eRemaining))
+			},
+				Entry("single digit", "1", "1", ""),
+				Entry("multiple digits more than one", "10089", "10089", ""),
+				Entry("zero fraction", "0.123", "0.123", ""),
+				Entry("fraction greater than one", "9230000.00", "9230000.00", ""),
+			)
 		})
 	})
 })

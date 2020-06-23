@@ -24,16 +24,17 @@ func CharParser(anyChar string) ParseFn {
 	}
 }
 
-func AndThen(first ParseFn, second ParseFn) ParseFn {
+func AndThen(first ParseFn, second ParseFn, name string) ParseFn {
 	return func(input string) (string, string, error) {
 		firstChar, firstRemaining, firstErr := first(input)
 		if firstErr != nil {
-			return "", "", firstErr
+			return "", "", fmt.Errorf("first group of '%s' failed: %s", name, firstErr)
 		}
 
 		secondChar, secondRemaining, secondErr := second(firstRemaining)
 		if secondErr != nil {
-			return "", "", secondErr
+			return "", "", fmt.Errorf("second group of '%s' failed: %s", name, secondErr)
+
 		}
 
 		return firstChar + secondChar, secondRemaining, nil
@@ -64,7 +65,7 @@ func OneOrMore(parser ParseFn, name string) ParseFn {
 			presult, premaining, perr := parser(remaining)
 			if perr != nil {
 				if remaining == input {
-					return "", "", fmt.Errorf("None matched for '%s'", name)
+					return "", "", fmt.Errorf("None matched for '%s', '%s'", name, perr)
 				}
 				return result, remaining, nil
 			}
