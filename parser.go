@@ -60,3 +60,19 @@ func AndThen(first ParseFn, second ParseFn) ParseFn {
 		return firstChar + secondChar, secondRemaining, nil
 	}
 }
+
+func OrElse(first ParseFn, second ParseFn) ParseFn {
+	return func(input string) (string, string, error) {
+		firstChar, firstRemaining, firstErr := first(input)
+		if firstErr == nil {
+			return firstChar, firstRemaining, nil
+		}
+
+		secondChar, secondRemaining, secondErr := second(input)
+		if secondErr == nil {
+			return secondChar, secondRemaining, nil
+		}
+
+		return "", "", secondErr
+	}
+}
