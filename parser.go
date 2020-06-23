@@ -74,6 +74,16 @@ func OneOrMore(parser ParseFn, name string) ParseFn {
 	}
 }
 
+func ZeroOrOne(parser ParseFn) ParseFn {
+	return func(input string) (string, string, error) {
+		presult, premaining, perr := parser(input)
+		if perr == nil {
+			return presult, premaining, nil
+		}
+		return "", input, nil
+	}
+}
+
 type MapFn func(string) string
 
 func Map(mapFn MapFn, parse ParseFn) ParseFn {

@@ -120,4 +120,87 @@ var _ = Describe("PC", func() {
 			Expect(err).To(MatchError("Expected 'a'. Got 'x'"))
 		})
 	})
+
+	Describe("oneOrMore", func() {
+		It("matches one or more of the parser", func() {
+			parseA := pc.CharParser("A")
+			parseAAA := pc.OneOrMore(parseA, "a+")
+
+			char, remaining, err := parseAAA("AAABBB")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(char).To(Equal("AAA"))
+			Expect(remaining).To(Equal("BBB"))
+		})
+	})
+
+	Describe("zeroOrone", func() {
+		It("returns the matched char and remaining when there is a match", func() {
+			parseA := pc.CharParser("A")
+			parseAMaybe := pc.ZeroOrOne(parseA)
+
+			char, remaining, err := parseAMaybe("AB")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(char).To(Equal("A"))
+			Expect(remaining).To(Equal("B"))
+		})
+
+		It("returns the input when there is no match", func() {
+			parseA := pc.CharParser("A")
+			parseAMaybe := pc.ZeroOrOne(parseA)
+
+			char, remaining, err := parseAMaybe("B")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(char).To(Equal(""))
+			Expect(remaining).To(Equal("B"))
+		})
+	})
+
+	Describe("a json structure", func() {
+
+		It("matches a single digit number", func() {
+			parseOneToNine := pc.CharParser("123456789")
+
+			char, remaining, err := parseOneToNine("5")
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(char).To(Equal("5"))
+			Expect(remaining).To(Equal(""))
+		})
+
+		It("matches a many digit number", func() {
+			parseOneToNine := pc.CharParser("123456789")
+
+			char, remaining, err := pc.OneOrMore(parseOneToNine, "1-9 digit")("567")
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(char).To(Equal("567"))
+			Expect(remaining).To(Equal(""))
+		})
+
+		// It("matches a positive number parser", func() {
+		// 	parseOneToNine := pc.CharParser("123456789")
+		// 	parseZero := pc.CharParser("0")
+		// 	parseDecimalPlace := pc.CharParser(".")
+		//   parseDigit := pc.OrElse(parseZero, parseOneToNine)
+		// 	parseFraction := pc.AndThen(
+		// 		pc.AndThen(parseZero, parseDecimalPlace),
+		// 		pc.OneOrMore(parseDigit),
+		// 	)
+		// 	parseNumber := pc.OrElse(
+		// 		parseFraction,
+		// 		pc.AndThen(parseOneToNine, pc.OneOrMore(parseDigit))
+		//
+		// 	char, remaining, err := pc.OneOrMore(parseOneToNine, "1-9 digit")("567")
+		//
+		// 	Expect(err).NotTo(HaveOccurred())
+		// 	Expect(char).To(Equal("567"))
+		// 	Expect(remaining).To(Equal(""))
+		// })
+
+		It("matches {}", func() {
+			// parseOpeningBrace := pc.CharParser("{")
+			// parseClosingBrace := pc.CharParser("}")
+
+		})
+	})
 })
