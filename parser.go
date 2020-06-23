@@ -44,3 +44,19 @@ func CharParser(char string) ParseFn {
 		return "", "", fmt.Errorf("Expected '%s'. Got '%c'", char, input[0])
 	}
 }
+
+func AndThen(first ParseFn, second ParseFn) ParseFn {
+	return func(input string) (string, string, error) {
+		firstChar, firstRemaining, firstErr := first(input)
+		if firstErr != nil {
+			return "", "", firstErr
+		}
+
+		secondChar, secondRemaining, secondErr := second(firstRemaining)
+		if secondErr != nil {
+			return "", "", secondErr
+		}
+
+		return firstChar + secondChar, secondRemaining, nil
+	}
+}

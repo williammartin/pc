@@ -76,4 +76,34 @@ var _ = Describe("PC", func() {
 		})
 	})
 
+	Describe("andThen", func() {
+		It("errors if first parse doesn't match", func() {
+			parseA := pc.CharParser("a")
+			parseB := pc.CharParser("b")
+			parseAB := pc.AndThen(parseA, parseB)
+
+			_, _, err := parseAB("xyz")
+			Expect(err).To(MatchError("Expected 'a'. Got 'x'"))
+		})
+
+		It("errors if second parse doesn't match", func() {
+			parseA := pc.CharParser("a")
+			parseB := pc.CharParser("b")
+			parseAB := pc.AndThen(parseA, parseB)
+
+			_, _, err := parseAB("ayz")
+			Expect(err).To(MatchError("Expected 'b'. Got 'y'"))
+		})
+
+		It("returns both chars and remaining if both match", func() {
+			parseA := pc.CharParser("a")
+			parseB := pc.CharParser("b")
+			parseAB := pc.AndThen(parseA, parseB)
+
+			chars, remaining, err := parseAB("abc")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(chars).To(Equal("ab"))
+			Expect(remaining).To(Equal("c"))
+		})
+	})
 })
