@@ -28,3 +28,19 @@ func ParseChar(char byte, input string) (byte, string, error) {
 
 	return 0, "", fmt.Errorf("Expected '%c'. Got '%c'", char, input[0])
 }
+
+type ParseFn func(string) (byte, string, error)
+
+func CharParser(char byte) ParseFn {
+	return func(input string) (byte, string, error) {
+		if input == "" {
+			return 0, "", errors.New("no more input")
+		}
+
+		if input[0] == char {
+			return char, input[1:], nil
+		}
+
+		return 0, "", fmt.Errorf("Expected '%c'. Got '%c'", char, input[0])
+	}
+}

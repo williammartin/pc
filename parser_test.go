@@ -59,4 +59,21 @@ var _ = Describe("PC", func() {
 		})
 	})
 
+	Describe("charParser", func() {
+		It("returns a function that parses chars", func() {
+			parseA := pc.CharParser('a')
+
+			_, _, err := parseA("")
+			Expect(err).To(MatchError("no more input"))
+
+			char, remaining, err := parseA("abc")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(char).To(BeEquivalentTo('a'))
+			Expect(remaining).To(Equal("bc"))
+
+			_, _, err = parseA("zyx")
+			Expect(err).To(MatchError("Expected 'a'. Got 'z'"))
+		})
+	})
+
 })
