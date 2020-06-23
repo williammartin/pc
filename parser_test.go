@@ -1,6 +1,8 @@
 package pc_test
 
 import (
+	"strings"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -138,6 +140,25 @@ var _ = Describe("PC", func() {
 			_, _, err := parseAB("xyz")
 			Expect(err).To(MatchError("Expected 'b'. Got 'x'"))
 		})
+	})
 
+	Describe("map", func() {
+		It("returns the mapped parsed value if the parser matches", func() {
+			parseA := pc.CharParser("a")
+			parseAMap := pc.Map(strings.ToUpper, parseA)
+
+			char, remaining, err := parseAMap("abc")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(char).To(Equal("A"))
+			Expect(remaining).To(Equal("bc"))
+		})
+
+		It("errors if parse doesn't match", func() {
+			parseA := pc.CharParser("a")
+			parseAMap := pc.Map(strings.ToUpper, parseA)
+
+			_, _, err := parseAMap("xyz")
+			Expect(err).To(MatchError("Expected 'a'. Got 'x'"))
+		})
 	})
 })

@@ -76,3 +76,16 @@ func OrElse(first ParseFn, second ParseFn) ParseFn {
 		return "", "", secondErr
 	}
 }
+
+type MapFn func(string) string
+
+func Map(mapFn MapFn, parse ParseFn) ParseFn {
+	return func(input string) (string, string, error) {
+		char, remaining, err := parse(input)
+		if err != nil {
+			return "", "", err
+		}
+
+		return mapFn(char), remaining, nil
+	}
+}
