@@ -5,43 +5,22 @@ import (
 	"fmt"
 )
 
-func ParseA(input string) (bool, string) {
-	if input == "" {
-		return false, ""
-	}
-
-	if input[0] == 'A' {
-		return true, input[1:]
-	}
-
-	return false, input
-}
-
-func ParseChar(char string, input string) (string, string, error) {
-	if input == "" {
-		return "", "", errors.New("no more input")
-	}
-
-	if string(input[0]) == char {
-		return char, input[1:], nil
-	}
-
-	return "", "", fmt.Errorf("Expected '%s'. Got '%c'", char, input[0])
-}
-
 type ParseFn func(string) (string, string, error)
 
-func CharParser(char string) ParseFn {
+// Accepts any of the given chars in char
+func CharParser(anyChar string) ParseFn {
 	return func(input string) (string, string, error) {
 		if input == "" {
 			return "", "", errors.New("no more input")
 		}
 
-		if string(input[0]) == char {
-			return char, input[1:], nil
+		for i := 0; i < len(anyChar); i++ {
+			if anyChar[i] == input[0] {
+				return string(input[0]), input[1:], nil
+			}
 		}
 
-		return "", "", fmt.Errorf("Expected '%s'. Got '%c'", char, input[0])
+		return "", "", fmt.Errorf("Expected '%s'. Got '%c'", anyChar, input[0])
 	}
 }
 
@@ -74,6 +53,24 @@ func OrElse(first ParseFn, second ParseFn) ParseFn {
 		}
 
 		return "", "", secondErr
+	}
+}
+
+func OneOrMore(parser ParseFn, name string) ParseFn {
+	return func(input string) (string, string, error) {
+		result := ""
+		remaining := input
+		for {
+			presult, premaining, perr := parser(remaining)
+			if perr != nil {
+				if remaining == input {
+					return "", "", fmt.Errorf("None matched for '%s'", name)
+				}
+				return result, remaining, nil
+			}
+			result += presult
+			remaining = premaining
+		}
 	}
 }
 
